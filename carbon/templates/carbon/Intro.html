@@ -1,0 +1,13 @@
+{% extends "otree/Page.html" %}
+
+{% block title %}碳中和宣传效果调研问卷{% endblock %}
+
+{% block content %}
+<div class="card p-3">
+    <p><strong>尊敬的参与者：</strong></p>
+    <p>您好！本次问卷为纯学术研究调研，旨在了解公众对环境问题的认知与态度。本问卷全程匿名、数据严格保密，所有数据仅用于学术统计分析，不用于商业用途，不泄露任何个人信息。</p>
+    <p>问卷无对错之分，请依据您的真实想法和直觉作答。整体填写时长约 5-6 分钟。</p>
+    <p>点击"下一页"开始作答。</p>
+</div>
+{{ next_button }}
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends "otree/Page.html" %}
+
+{% block title %}第二部分：阅读材料{% endblock %}
+
+{% block content %}
+<div class="alert alert-warning">
+    作答提示：请认真阅读下方完整文本，阅读完毕后继续作答后续题目。
+    （系统随机分配，每人仅见其中一组。）
+</div>
+<div class="card p-3" style="white-space: pre-wrap;">{{ treatment_text }}</div>
+{{ next_button }}
+{% endblock %}

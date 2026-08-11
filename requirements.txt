@@ -1,0 +1,2 @@
+otree==6.0.13
+psycopg2-binary
