@@ -3,7 +3,3 @@ run = "otree prodserver 0.0.0.0:${PORT:-8000}"
 [env]
 OTREE_PRODUCTION = "1"
 OTREE_AUTH_LEVEL = "STUDY"
-
-[deployment]
-run = ["sh", "-c", "otree prodserver 0.0.0.0:${PORT:-8000}"]
-deploymentTarget = "cloudrun"

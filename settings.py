@@ -2,7 +2,7 @@ import os
 import secrets
 
 # oTree 6 requires these keys. SECRET_KEY must be STABLE in production
-# (set OTREE_SECRET_KEY as an env var on Render), otherwise sessions break on restart.
+# (set OTREE_SECRET_KEY as an env var on Replit), otherwise sessions break on restart.
 LANGUAGE_CODE = 'zh-hans'
 TIME_ZONE = 'Asia/Shanghai'
 
