@@ -1,9 +1,11 @@
 from otree.api import Page
+from starlette.responses import Response
+from urllib.parse import quote
+import os
 from .models import (
     record_download,
-    GUIDE_CHUNKS,
-    GUIDE_TOTAL,
     GUIDE_FILENAME,
+    GUIDE_PATH,
     TREATMENTS,
 )
 
@@ -71,30 +73,25 @@ class Thanks(Page):
             filename=GUIDE_FILENAME,
         )
 
-    def live_method(player, data):
-        action = data.get('action')
-        if action == 'download_start':
-            return {
-                player.id_in_group: {
-                    'type': 'meta',
-                    'total_chunks': GUIDE_TOTAL,
-                    'filename': GUIDE_FILENAME,
-                }
-            }
-        elif action == 'chunk':
-            i = data.get('index', 0)
-            return {
-                player.id_in_group: {
-                    'type': 'chunk',
-                    'index': i,
-                    'data': GUIDE_CHUNKS[i],
-                    'last': i == GUIDE_TOTAL - 1,
-                }
-            }
-        elif action == 'download_done':
+    def post(self, request=None, **kwargs):
+        fd = getattr(self, '_form_data', None)
+        if fd is not None and fd.get('download_guide'):
+            player = self.player
+            with open(GUIDE_PATH, 'rb') as _f:
+                data = _f.read()
+            # Force a real download (never inline preview), with a safe ASCII
+            # fallback name plus a UTF-8 encoded original name for modern browsers.
+            disp = (
+                'attachment; filename="carbon-guide.pdf"; '
+                "filename*=UTF-8''" + quote(GUIDE_FILENAME)
+            )
+            resp = Response(content=data, media_type='application/octet-stream')
+            resp.headers['Content-Disposition'] = disp
+            resp.headers['Content-Length'] = str(len(data))
+            resp.headers['Cache-Control'] = 'no-store'
             record_download(player)
-            return {player.id_in_group: {'type': 'ok', 'count': player.download_count}}
-        return {player.id_in_group: {'type': 'error'}}
+            return resp
+        return super().post()
 
 
 page_sequence = [

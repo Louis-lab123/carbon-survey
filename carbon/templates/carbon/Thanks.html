@@ -6,7 +6,12 @@
 <div class="card p-4 text-center">
     <p>🎉 感谢您完成本次调研！</p>
     <p>作为对您参与的感谢，您可以免费下载《{{ filename }}》电子版：</p>
-    <button id="btn-download" class="btn btn-primary btn-lg">📥 点击下载《{{ filename }}》</button>
+    <form method="post" id="dl-form">
+        <button id="btn-download" type="submit" name="download_guide" value="1"
+                class="btn btn-primary btn-lg">
+            📥 点击下载《{{ filename }}》
+        </button>
+    </form>
     <p id="dl-status" class="mt-2 text-muted"></p>
     <hr>
     <p class="small text-muted text-start">
@@ -19,69 +24,33 @@
 
 {% block scripts %}
 <script>
-    var chunks = [];
-    var total = 0;
-    var filename = '';
-    var received = 0;
-
-    function b64ToUint8(b64) {
-        var binary = atob(b64);
-        var len = binary.length;
-        var bytes = new Uint8Array(len);
-        for (var i = 0; i < len; i++) {
-            bytes[i] = binary.charCodeAt(i);
-        }
-        return bytes;
-    }
-
-    window.liveRecv = function (payload) {
-        if (!payload) return;
-        if (payload.type === 'meta') {
-            total = payload.total_chunks;
-            filename = payload.filename;
-            received = 0;
-            chunks = new Array(total);
-            liveSend({action: 'chunk', index: 0});
-        } else if (payload.type === 'chunk') {
-            chunks[payload.index] = payload.data;
-            received++;
-            if (payload.last) {
-                assembleAndDownload();
-            } else {
-                liveSend({action: 'chunk', index: payload.index + 1});
-            }
-        } else if (payload.type === 'ok') {
-            document.getElementById('dl-status').textContent =
-                '✅ 下载完成并已记录（您已下载 ' + payload.count + ' 次）';
-            document.getElementById('btn-download').disabled = false;
-        } else if (payload.type === 'error') {
-            document.getElementById('dl-status').textContent = '出错了，请重试。';
-            document.getElementById('btn-download').disabled = false;
-        }
-    };
-
-    function assembleAndDownload() {
-        var blobParts = [];
-        for (var i = 0; i < total; i++) {
-            blobParts.push(b64ToUint8(chunks[i]));
-        }
-        var blob = new Blob(blobParts, {type: 'application/octet-stream'});
-        var url = URL.createObjectURL(blob);
-        var a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
-        liveSend({action: 'download_done'});
-        document.getElementById('dl-status').textContent = '正在确认下载…';
-    }
-
-    document.getElementById('btn-download').addEventListener('click', function () {
-        document.getElementById('dl-status').textContent = '正在准备下载…';
-        document.getElementById('btn-download').disabled = true;
-        liveSend({action: 'download_start'});
+    document.getElementById('dl-form').addEventListener('submit', function (e) {
+        e.preventDefault();
+        var btn = document.getElementById('btn-download');
+        btn.disabled = true;
+        document.getElementById('dl-status').textContent = '正在下载…';
+        fetch('', {method: 'POST', body: new FormData(this)})
+            .then(function (resp) {
+                if (!resp.ok) throw new Error('network');
+                return resp.blob();
+            })
+            .then(function (blob) {
+                var url = URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = '{{ filename }}';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+                document.getElementById('dl-status').textContent =
+                    '✅ 下载完成（文件已保存到您的设备）';
+                btn.disabled = false;
+            })
+            .catch(function () {
+                document.getElementById('dl-status').textContent = '下载失败，请重试。';
+                btn.disabled = false;
+            });
     });
 </script>
 {% endblock %}

@@ -1,6 +1,5 @@
 import os
 import time
-import base64
 import itertools
 
 from otree.api import models, BaseConstants, BaseSubsession, BaseGroup, BasePlayer, ExtraModel
@@ -151,20 +150,12 @@ class DownloadEvent(ExtraModel):
 
 
 # ---------------------------------------------------------------------------
-# Guide file: read once at startup, base64-encode, split into ~180KB chunks.
-# The raw bytes are NEVER placed in any HTML -> forces true download, no preview.
+# Guide file. Served over HTTP as an attachment (Content-Disposition: attachment)
+# so the browser SAVES it instead of previewing it inline. Raw bytes are never
+# placed in any HTML template.
 # ---------------------------------------------------------------------------
 _HERE = os.path.dirname(os.path.abspath(__file__))
-_GUIDE_PATH = os.path.join(_HERE, 'guide.pdf')
-with open(_GUIDE_PATH, 'rb') as _f:
-    _GUIDE_BYTES = _f.read()
-
-CHUNK_SIZE = 180000
-GUIDE_CHUNKS = [
-    base64.b64encode(_GUIDE_BYTES[i:i + CHUNK_SIZE]).decode('ascii')
-    for i in range(0, len(_GUIDE_BYTES), CHUNK_SIZE)
-]
-GUIDE_TOTAL = len(GUIDE_CHUNKS)
+GUIDE_PATH = os.path.join(_HERE, 'guide.pdf')
 GUIDE_FILENAME = '日常低碳行动极简指南.pdf'
 
 
