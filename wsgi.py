@@ -21,6 +21,14 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 if HERE not in sys.path:
     sys.path.insert(0, HERE)
 
+# PythonAnywhere serves the app with a working directory that is NOT the project
+# root, but oTree 6's OTreeStaticFiles(directory='_static') uses a RELATIVE path
+# resolved against the current working dir. If we don't chdir to the project root,
+# the production import crashes with: RuntimeError: Directory '_static' does not exist.
+# chdir + ensure the dir exists BEFORE importing otree.
+os.chdir(HERE)
+os.makedirs('_static', exist_ok=True)
+
 # oTree discovers its settings module via OTREE_SETTINGS_MODULE (default 'settings').
 os.environ.setdefault('OTREE_SETTINGS_MODULE', 'settings')
 # Production defaults (can also be set in the PA Web tab env vars).

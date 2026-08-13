@@ -64,12 +64,18 @@ pip install -r requirements.txt                       # 装 otree 6.0.13 + psyco
    # 把仓库目录加入 Python 路径
    PROJECT_DIR = '/home/<user>/carbon-survey'
    sys.path.insert(0, PROJECT_DIR)
+   # PythonAnywhere 的 WSGI 工作目录不是项目根；oTree 6 的静态目录 '_static'
+   # 是相对路径，必须 chdir 到项目根，否则生产模式 import 直接崩：
+   #   RuntimeError: Directory '_static' does not exist
+   os.chdir(PROJECT_DIR)
+   os.makedirs('_static', exist_ok=True)
 
    from a2wsgi import ASGIMiddleware
    from otree.asgi import app as asgi_app
 
    application = ASGIMiddleware(asgi_app)
    ```
+   > **必须保留上面的 `os.chdir(PROJECT_DIR)` 和 `os.makedirs('_static', exist_ok=True)`**——这是"something went wrong"的最常见原因（工作目录不对导致 oTree 找不到 `_static`）。
    > 不需要 `DATABASE_URL`——oTree 默认用本地 SQLite（`db.sqlite3`）。
    > `OTREE_AUTH_LEVEL=STUDY` 让参与者免登录直接填；管理后台需上面密码。
 5. 保存文件（`Ctrl+S` 或点编辑器顶部 Save），回到 Web 标签。
