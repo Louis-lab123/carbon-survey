@@ -40,22 +40,39 @@ pip install -r requirements.txt                       # 装 otree 6.0.13 + psyco
 ```
 > 仓库是 public，免登录即可 clone。装完 `otree --version` 应显示 6.0.13。
 
-## 第 3 步：配置 Web 应用（指向我们的 WSGI 入口）
+## 第 3 步：配置 Web 应用（WSGI 入口 + 环境变量）
 1. 顶部 **Web** 标签 → **Add a new web app** → 选 **Manual configuration** → 选 **Python 3.10**（与第 2 步 venv 同版本）→ 下一步。
-2. 在该 Web app 配置页修改三项：
+2. 在该 Web app 配置页设置这两项：
    - **Source code directory**：`/home/<user>/carbon-survey`
-   - **WSGI configuration file**：`/home/<user>/carbon-survey/wsgi.py`（仓库里已带，a2wsgi 桥接 ASGI→WSGI）
    - **Virtualenv**：`/home/<user>/.virtualenvs/carbon-survey`
-3. 页面下方 **Environment variables** 逐行添加（每行 `KEY=VALUE`）：
-   ```
-   OTREE_PRODUCTION=1
-   OTREE_AUTH_LEVEL=STUDY
-   OTREE_ADMIN_PASSWORD=<设一个强密码>
-   OTREE_SECRET_KEY=<任意长随机串，务必保存好、别改>
-   OTREE_REST_KEY=<任意长随机串>
+   > 注意：**PythonAnywhere 免费 Beginner 计划在 Web 标签里没有 "Environment variables" 区域**，所以环境变量要直接写进下面的 WSGI 文件。
+3. 保持 **WSGI configuration file** 为默认值 `/var/www/<user>_pythonanywhere_com_wsgi.py`，点击该链接打开编辑器。
+4. **全选并删除**原文件内容，粘贴下面这段，并把 `<user>` 换成你的 PA 用户名，把 `<...>` 换成你自己的值：
+   ```python
+   import os
+   import sys
+
+   # PythonAnywhere 免费 Beginner 计划没有 Web 标签 "Environment variables" 区，
+   # 因此把环境变量直接写在这个 WSGI 入口文件里。
+   os.environ['OTREE_SETTINGS_MODULE'] = 'settings'
+   os.environ['OTREE_PRODUCTION'] = '1'
+   os.environ['OTREE_AUTH_LEVEL'] = 'STUDY'
+   os.environ['OTREE_ADMIN_PASSWORD'] = '<设一个强密码>'
+   os.environ['OTREE_SECRET_KEY'] = '<任意长随机串，务必保存好、别改>'
+   os.environ['OTREE_REST_KEY'] = '<任意长随机串>'
+
+   # 把仓库目录加入 Python 路径
+   PROJECT_DIR = '/home/<user>/carbon-survey'
+   sys.path.insert(0, PROJECT_DIR)
+
+   from a2wsgi import ASGIMiddleware
+   from otree.asgi import app as asgi_app
+
+   application = ASGIMiddleware(asgi_app)
    ```
    > 不需要 `DATABASE_URL`——oTree 默认用本地 SQLite（`db.sqlite3`）。
    > `OTREE_AUTH_LEVEL=STUDY` 让参与者免登录直接填；管理后台需上面密码。
+5. 保存文件（`Ctrl+S` 或点编辑器顶部 Save），回到 Web 标签。
 
 ## 第 4 步：首次初始化数据库（仅需一次）
 回到 **Bash 控制台**（venv 已激活、目录在 `~/carbon-survey`）：
